@@ -1,3 +1,4 @@
+```
 WITH
 -- CTE for MD5-based UUIDs
 md5_data AS (
@@ -25,3 +26,4 @@ SELECT
 FROM md5_data m
 JOIN fnv_data f ON m.row_num = f.row_num
 LIMIT 20; -- Remove limit to see all 1M rows
+```
