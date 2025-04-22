@@ -1,3 +1,4 @@
+```
 import boto3
 from pyathena import connect
 from pyathena.util import as_pandas
@@ -32,3 +33,4 @@ cursor = conn.cursor()
 cursor.execute(view_sql)
 
 print("✅ View created successfully.")
+```
