@@ -1,29 +1,34 @@
-```
-WITH
--- CTE for MD5-based UUIDs
-md5_data AS (
-  SELECT 
-    (a.n - 1) * 1000 + b.n AS row_num,
-    MD5(CONCAT('md5_', a.n, '_', b.n, '_', FLOOR(RANDOM() * 100000)::INT)) AS md5_uuid
-  FROM generate_series(1, 1000) a(n)
-  CROSS JOIN generate_series(1, 1000) b(n)
-),
+import boto3
+from pyathena import connect
+from pyathena.util import as_pandas
+import os
 
--- CTE for FNV_HASH-based IDs
-fnv_data AS (
-  SELECT 
-    (a.n - 1) * 1000 + b.n AS row_num,
-    FNV_HASH(CONCAT('fnv_', a.n, '_', b.n, '_', FLOOR(RANDOM() * 100000)::INT)) AS fnv_hash
-  FROM generate_series(1, 1000) a(n)
-  CROSS JOIN generate_series(1, 1000) b(n)
+# ---- Configurable Section ----
+aws_access_key = "YOUR_ACCESS_KEY"
+aws_secret_key = "YOUR_SECRET_KEY"
+region_name = "us-east-1"  # Change as needed
+s3_output = "s3://your-athena-query-results-bucket/folder/"  # Replace with your actual bucket/folder
+database_name = "your_database_name"
+view_file_path = "view.sql"
+# --------------------------------
+
+# Read SQL file
+if not os.path.exists(view_file_path):
+    raise FileNotFoundError(f"{view_file_path} not found.")
+
+with open(view_file_path, "r") as f:
+    view_sql = f.read().strip()
+
+# Connect and run query
+conn = connect(
+    aws_access_key_id=aws_access_key,
+    aws_secret_access_key=aws_secret_key,
+    region_name=region_name,
+    s3_staging_dir=s3_output,
+    schema_name=database_name
 )
 
--- Join on row_num
-SELECT 
-  m.row_num,
-  m.md5_uuid,
-  f.fnv_hash
-FROM md5_data m
-JOIN fnv_data f ON m.row_num = f.row_num
-LIMIT 20; -- Remove limit to see all 1M rows
-```
+cursor = conn.cursor()
+cursor.execute(view_sql)
+
+print("✅ View created successfully.")
