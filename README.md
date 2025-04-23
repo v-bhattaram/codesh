@@ -1,36 +1,41 @@
 ```
 import boto3
-from pyathena import connect
-from pyathena.util import as_pandas
-import os
+from pyspark.sql import SparkSession
 
-# ---- Configurable Section ----
-aws_access_key = "YOUR_ACCESS_KEY"
-aws_secret_key = "YOUR_SECRET_KEY"
-region_name = "us-east-1"  # Change as needed
-s3_output = "s3://your-athena-query-results-bucket/folder/"  # Replace with your actual bucket/folder
-database_name = "your_database_name"
-view_file_path = "view.sql"
-# --------------------------------
+# --- CONFIGURATION ---
+bucket = "your-bucket-name"
+prefix = "your/path/to/folder/"  # folder path in S3
+region = "your-region"  # e.g., "us-east-1"
 
-# Read SQL file
-if not os.path.exists(view_file_path):
-    raise FileNotFoundError(f"{view_file_path} not found.")
+# --- 1. List CSV files in S3 folder ---
+s3 = boto3.client("s3", region_name=region)
 
-with open(view_file_path, "r") as f:
-    view_sql = f.read().strip()
+response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+csv_files = [
+    f"s3://{bucket}/{obj['Key']}"
+    for obj in response.get("Contents", [])
+    if obj["Key"].endswith(".csv")
+]
 
-# Connect and run query
-conn = connect(
-    aws_access_key_id=aws_access_key,
-    aws_secret_access_key=aws_secret_key,
-    region_name=region_name,
-    s3_staging_dir=s3_output,
-    schema_name=database_name
-)
+print(f"Found {len(csv_files)} CSV files in s3://{bucket}/{prefix}")
+for f in csv_files:
+    print(" -", f)
 
-cursor = conn.cursor()
-cursor.execute(view_sql)
+# --- 2. Read & summarize each CSV file ---
+for file_path in csv_files:
+    print("\n📄 File:", file_path)
 
-print("✅ View created successfully.")
+    try:
+        df = spark.read.option("header", "true").csv(file_path)
+
+        print("🧱 Columns & Types:")
+        for col in df.dtypes:
+            print(f" - {col[0]}: {col[1]}")
+
+        row_count = df.count()
+        print(f"📊 Row Count: {row_count}")
+        
+    except Exception as e:
+        print("❌ Error reading file:", e)
+
 ```
