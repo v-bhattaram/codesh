@@ -1,65 +1,99 @@
 ```
 
-# Redshift connection setup (create engine only once outside the function)
-redshift_config = {
-    "host_url": "redshift-cluster.xxxxxx.us-west-2.redshift.amazonaws.com:5439/mydb",
-    "user": "my_user",
-    "password": "my_password",
-    "aws_iam_role": "arn:aws:iam::123456789012:role/myRedshiftRole",  # Not used in this version
-    "tempdir": "s3://my-bucket/temp/"  # Not used in this version
-}
-
-# Create SQLAlchemy engine
-engine = create_engine(
-    f"postgresql+psycopg2://{redshift_config['user']}:{redshift_config['password']}@{redshift_config['host_url']}"
-)
-
-# S3 path to CSV and target table in Redshift
-s3_path = "s3://my-bucket/data/data.csv"
-target_table = "public.my_table"
-
-# Call the function with the connection object
-load_csv_to_redshift_emr(s3_path, target_table, engine)
-
-
-import pandas as pd
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
 import psycopg2
-from sqlalchemy import create_engine
-import boto3
+from io import StringIO
+
+# Create Spark session (assumes you're in EMR Notebook with Spark context)
+spark = SparkSession.builder.getOrCreate()
+
+def redshift_type_from_spark(datatype):
+    """Map PySpark SQL types to Redshift types."""
+    if isinstance(datatype, IntegerType):
+        return "INTEGER"
+    elif isinstance(datatype, LongType):
+        return "BIGINT"
+    elif isinstance(datatype, FloatType):
+        return "REAL"
+    elif isinstance(datatype, DoubleType):
+        return "DOUBLE PRECISION"
+    elif isinstance(datatype, BooleanType):
+        return "BOOLEAN"
+    elif isinstance(datatype, TimestampType):
+        return "TIMESTAMP"
+    elif isinstance(datatype, DateType):
+        return "DATE"
+    else:
+        return "VARCHAR(256)"  # Default for StringType, BinaryType, etc.
 
 def load_csv_to_redshift_emr(s3_path, target_table, conn):
     """
-    Load a CSV file from S3 into a Redshift table.
+    Create a Redshift table and load a CSV file from S3 using PySpark and psycopg2.
 
     Args:
-        s3_path (str): S3 path to CSV file (e.g., 's3://bucket/data/data.csv')
-        target_table (str): Fully qualified Redshift table name (e.g., 'schema.table')
-        conn (SQLAlchemy connection object): Active Redshift connection
+        s3_path (str): S3 path to the CSV (e.g., 's3://bucket/data.csv')
+        target_table (str): Fully qualified Redshift table name (schema.table)
+        conn (psycopg2 connection): Redshift connection
     """
-    # Initialize S3 client using boto3 (since we're on EMR)
-    s3 = boto3.client('s3')
+    print(f"📥 Reading CSV from {s3_path} using PySpark...")
+    df = spark.read.option("header", "true").csv(s3_path, inferSchema=True)
 
-    # Parse the S3 path to get bucket and file key
-    bucket_name = s3_path.split('/')[2]
-    file_key = '/'.join(s3_path.split('/')[3:])
+    # Extract schema and table name
+    schema_name, table_name = target_table.split(".")
 
-    # Read the CSV file from S3 using pandas (without needing to download to local)
-    print(f"📥 Reading CSV from S3: s3://{bucket_name}/{file_key}")
-    df = pd.read_csv(f"s3://{bucket_name}/{file_key}")
+    # Generate CREATE TABLE SQL
+    columns = []
+    for field in df.schema.fields:
+        redshift_type = redshift_type_from_spark(field.dataType)
+        columns.append(f'"{field.name}" {redshift_type}')
+    ddl = f"CREATE TABLE IF NOT EXISTS {target_table} (\n  {', '.join(columns)}\n);"
 
-    # Clear the target table
-    print("🧹 Clearing target table...")
-    with conn.begin():
-        conn.execute(f"DELETE FROM {target_table}")
+    # Execute DDL
+    with conn.cursor() as cur:
+        print(f"📐 Creating table {target_table}...")
+        cur.execute(f"DROP TABLE IF EXISTS {target_table};")
+        cur.execute(ddl)
+        conn.commit()
 
-    # Load the data into Redshift
-    print("🚀 Loading data into Redshift...")
-    df.to_sql(name=target_table.split('.')[-1],
-              schema=target_table.split('.')[0],
-              con=conn,
-              if_exists='append',  # Use 'replace' to truncate before inserting
-              index=False)
+    # Convert to pandas DataFrame for copy_expert
+    print("🧪 Converting to pandas...")
+    pandas_df = df.toPandas()
 
-    print("Data loaded successfully.")
+    # Prepare CSV for COPY
+    buffer = StringIO()
+    pandas_df.to_csv(buffer, index=False, header=False)
+    buffer.seek(0)
+
+    columns_csv = ', '.join([f'"{col}"' for col in pandas_df.columns])
+
+    print("🚀 Copying data to Redshift...")
+    with conn.cursor() as cur:
+        cur.copy_expert(f"""
+            COPY {target_table} ({columns_csv})
+            FROM STDIN
+            DELIMITER ','
+            CSV;
+        """, buffer)
+        conn.commit()
+
+    print("✅ Table created and data loaded successfully.")
+
+
+import psycopg2
+
+# Connect to Redshift
+conn = psycopg2.connect(
+    host="your-redshift-cluster.amazonaws.com",
+    port=5439,
+    dbname="yourdb",
+    user="youruser",
+    password="yourpassword"
+)
+
+# Call the function
+load_csv_to_redshift_emr("s3://your-bucket/data/data.csv", "public.new_table", conn)
+
+conn.close()
 
 ```
