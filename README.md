@@ -1,3 +1,5 @@
+```
+
 # Redshift connection setup (create engine only once outside the function)
 redshift_config = {
     "host_url": "redshift-cluster.xxxxxx.us-west-2.redshift.amazonaws.com:5439/mydb",
@@ -58,4 +60,6 @@ def load_csv_to_redshift_emr(s3_path, target_table, conn):
               if_exists='append',  # Use 'replace' to truncate before inserting
               index=False)
 
-    print("✅ Data loaded successfully.")
+    print("Data loaded successfully.")
+
+```
