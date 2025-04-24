@@ -1,41 +1,61 @@
-```
+# Redshift connection setup (create engine only once outside the function)
+redshift_config = {
+    "host_url": "redshift-cluster.xxxxxx.us-west-2.redshift.amazonaws.com:5439/mydb",
+    "user": "my_user",
+    "password": "my_password",
+    "aws_iam_role": "arn:aws:iam::123456789012:role/myRedshiftRole",  # Not used in this version
+    "tempdir": "s3://my-bucket/temp/"  # Not used in this version
+}
+
+# Create SQLAlchemy engine
+engine = create_engine(
+    f"postgresql+psycopg2://{redshift_config['user']}:{redshift_config['password']}@{redshift_config['host_url']}"
+)
+
+# S3 path to CSV and target table in Redshift
+s3_path = "s3://my-bucket/data/data.csv"
+target_table = "public.my_table"
+
+# Call the function with the connection object
+load_csv_to_redshift_emr(s3_path, target_table, engine)
+
+
+import pandas as pd
+import psycopg2
+from sqlalchemy import create_engine
 import boto3
-from pyspark.sql import SparkSession
 
-# --- CONFIGURATION ---
-bucket = "your-bucket-name"
-prefix = "your/path/to/folder/"  # folder path in S3
-region = "your-region"  # e.g., "us-east-1"
+def load_csv_to_redshift_emr(s3_path, target_table, conn):
+    """
+    Load a CSV file from S3 into a Redshift table.
 
-# --- 1. List CSV files in S3 folder ---
-s3 = boto3.client("s3", region_name=region)
+    Args:
+        s3_path (str): S3 path to CSV file (e.g., 's3://bucket/data/data.csv')
+        target_table (str): Fully qualified Redshift table name (e.g., 'schema.table')
+        conn (SQLAlchemy connection object): Active Redshift connection
+    """
+    # Initialize S3 client using boto3 (since we're on EMR)
+    s3 = boto3.client('s3')
 
-response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
-csv_files = [
-    f"s3://{bucket}/{obj['Key']}"
-    for obj in response.get("Contents", [])
-    if obj["Key"].endswith(".csv")
-]
+    # Parse the S3 path to get bucket and file key
+    bucket_name = s3_path.split('/')[2]
+    file_key = '/'.join(s3_path.split('/')[3:])
 
-print(f"Found {len(csv_files)} CSV files in s3://{bucket}/{prefix}")
-for f in csv_files:
-    print(" -", f)
+    # Read the CSV file from S3 using pandas (without needing to download to local)
+    print(f"📥 Reading CSV from S3: s3://{bucket_name}/{file_key}")
+    df = pd.read_csv(f"s3://{bucket_name}/{file_key}")
 
-# --- 2. Read & summarize each CSV file ---
-for file_path in csv_files:
-    print("\n📄 File:", file_path)
+    # Clear the target table
+    print("🧹 Clearing target table...")
+    with conn.begin():
+        conn.execute(f"DELETE FROM {target_table}")
 
-    try:
-        df = spark.read.option("header", "true").csv(file_path)
+    # Load the data into Redshift
+    print("🚀 Loading data into Redshift...")
+    df.to_sql(name=target_table.split('.')[-1],
+              schema=target_table.split('.')[0],
+              con=conn,
+              if_exists='append',  # Use 'replace' to truncate before inserting
+              index=False)
 
-        print("🧱 Columns & Types:")
-        for col in df.dtypes:
-            print(f" - {col[0]}: {col[1]}")
-
-        row_count = df.count()
-        print(f"📊 Row Count: {row_count}")
-        
-    except Exception as e:
-        print("❌ Error reading file:", e)
-
-```
+    print("✅ Data loaded successfully.")
