@@ -1,3 +1,4 @@
+```python
 import pyodbc
 
 def generate_merge_statement(conn_str, source_schema, source_table, target_schema, target_table):
@@ -55,3 +56,4 @@ WHEN NOT MATCHED BY TARGET THEN
     cursor.close()
     conn.close()
     return merge_sql
+```
