@@ -1,30 +1,57 @@
-When to Use AWS:
-Tightly Integrated AWS Ecosystem
-Ideal if you're already using AWS services like S3, IAM, Glue, Lambda, and Redshift — you get deep integration and unified security management.
+import pyodbc
 
-Cost and Flexibility at Scale
-Services like EMR let you control instance types and scaling, giving you cost-efficiency for large Spark workloads and long-running batch jobs.
+def generate_merge_statement(conn_str, source_schema, source_table, target_schema, target_table):
+    conn = pyodbc.connect(conn_str)
+    cursor = conn.cursor()
 
-ML: Use SageMaker for Managed ML Pipelines
-AWS SageMaker works well with data in S3 and PySpark outputs; it supports training, hyperparameter tuning, and deployment at scale in a managed way.
+    # Get column info
+    query_columns = f"""
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION
+    """
+    cursor.execute(query_columns, target_schema, target_table)
+    columns = [row.COLUMN_NAME for row in cursor.fetchall()]
+    if not columns:
+        return f"-- Target table {target_schema}.{target_table} not found."
 
-When to Use Snowflake:
-Focus on SQL Analytics and Simplicity
-Great for teams focused on data analysis rather than infrastructure — write SQL and push ML-ready data to external engines easily.
+    # Try to get a unique constraint or primary key
+    query_unique_cols = f"""
+        SELECT k.COLUMN_NAME
+        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS t
+        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE k
+          ON t.CONSTRAINT_NAME = k.CONSTRAINT_NAME
+        WHERE t.TABLE_SCHEMA = ? AND t.TABLE_NAME = ?
+          AND t.CONSTRAINT_TYPE IN ('PRIMARY KEY', 'UNIQUE')
+        ORDER BY k.ORDINAL_POSITION
+    """
+    cursor.execute(query_unique_cols, target_schema, target_table)
+    key_columns = [row.COLUMN_NAME for row in cursor.fetchall()]
+    if not key_columns:
+        key_columns = columns  # fallback to all columns
 
-Separation of Compute and Storage
-Isolate ML feature engineering workloads from analytics workloads without interfering with performance.
+    # Prepare merge components
+    on_clause = " AND ".join(
+        [f"T.[{col}] = S.[{col}]" for col in key_columns]
+    )
+    update_clause = ",\n        ".join(
+        [f"T.[{col}] = S.[{col}]" for col in columns if col not in key_columns]
+    )
+    insert_columns = ", ".join([f"[{col}]" for col in columns])
+    insert_values = ", ".join([f"S.[{col}]" for col in columns])
 
-ML: Partner ML Integration (e.g., DataRobot, H2O, or Snowpark ML)
-While Snowflake doesn’t run full training jobs, it can prepare and serve features via Snowpark (with PySpark) or integrate with external ML platforms or models.
-
-When to Use Databricks:
-Advanced Spark + ML Workloads
-Built specifically for heavy PySpark and ML workloads — supports streaming, complex transformations, and GPU-based training.
-
-Collaborative Development at Scale
-Unified notebooks for engineers, analysts, and data scientists to build, tune, and track ML models collaboratively.
-
-ML: Native MLflow & Delta Lake for ML Lifecycle
-First-class support for model versioning, experiment tracking (via MLflow), and production-grade pipelines using Delta Lake and PySpark.
-
+    # Assemble the full MERGE statement
+    merge_sql = f"""MERGE [{target_schema}].[{target_table}] AS T
+USING [{source_schema}].[{source_table}] AS S
+ON {on_clause}
+WHEN MATCHED THEN
+    UPDATE SET
+        {update_clause}
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT ({insert_columns})
+    VALUES ({insert_values});
+"""
+    cursor.close()
+    conn.close()
+    return merge_sql
