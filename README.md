@@ -1,59 +1,67 @@
-```python
-import pyodbc
+```
+from IPython.core.display import display, HTML
+import pandas as pd
 
-def generate_merge_statement(conn_str, source_schema, source_table, target_schema, target_table):
-    conn = pyodbc.connect(conn_str)
-    cursor = conn.cursor()
-
-    # Get column info
-    query_columns = f"""
-        SELECT COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-        ORDER BY ORDINAL_POSITION
+def show_merge_preview_html(conn, source_schema, source_table, target_schema, target_table, key_columns):
     """
-    cursor.execute(query_columns, target_schema, target_table)
-    columns = [row.COLUMN_NAME for row in cursor.fetchall()]
-    if not columns:
-        return f"-- Target table {target_schema}.{target_table} not found."
+    Fetches data from source and target Redshift tables and displays an HTML table comparing them.
 
-    # Try to get a unique constraint or primary key
-    query_unique_cols = f"""
-        SELECT k.COLUMN_NAME
-        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS t
-        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE k
-          ON t.CONSTRAINT_NAME = k.CONSTRAINT_NAME
-        WHERE t.TABLE_SCHEMA = ? AND t.TABLE_NAME = ?
-          AND t.CONSTRAINT_TYPE IN ('PRIMARY KEY', 'UNIQUE')
-        ORDER BY k.ORDINAL_POSITION
+    Args:
+        conn: DB connection object (psycopg2 or redshift_connector).
+        source_schema (str): Schema of the source table.
+        source_table (str): Source table name.
+        target_schema (str): Schema of the target table.
+        target_table (str): Target table name.
+        key_columns (list): List of column names used as the primary key for comparison.
     """
-    cursor.execute(query_unique_cols, target_schema, target_table)
-    key_columns = [row.COLUMN_NAME for row in cursor.fetchall()]
-    if not key_columns:
-        key_columns = columns  # fallback to all columns
+    # Helper to fetch full table as DataFrame
+    def fetch_table(schema, table, columns=None):
+        col_str = ", ".join(columns) if columns else "*"
+        query = f'SELECT {col_str} FROM "{schema}"."{table}"'
+        return pd.read_sql(query, conn)
 
-    # Prepare merge components
-    on_clause = " AND ".join(
-        [f"T.[{col}] = S.[{col}]" for col in key_columns]
-    )
-    update_clause = ",\n        ".join(
-        [f"T.[{col}] = S.[{col}]" for col in columns if col not in key_columns]
-    )
-    insert_columns = ", ".join([f"[{col}]" for col in columns])
-    insert_values = ", ".join([f"S.[{col}]" for col in columns])
+    # Get source columns
+    with conn.cursor() as cur:
+        cur.execute(f"""
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_schema = %s AND table_name = %s 
+            ORDER BY ordinal_position
+        """, (source_schema, source_table))
+        source_columns = [row[0] for row in cur.fetchall()]
 
-    # Assemble the full MERGE statement
-    merge_sql = f"""MERGE [{target_schema}].[{target_table}] AS T
-USING [{source_schema}].[{source_table}] AS S
-ON {on_clause}
-WHEN MATCHED THEN
-    UPDATE SET
-        {update_clause}
-WHEN NOT MATCHED BY TARGET THEN
-    INSERT ({insert_columns})
-    VALUES ({insert_values});
-"""
-    cursor.close()
-    conn.close()
-    return merge_sql
+    # Fetch tables
+    source_df = fetch_table(source_schema, source_table, source_columns)
+    target_df = fetch_table(target_schema, target_table, source_columns)
+
+    # Set index for comparison
+    source_df_indexed = source_df.set_index(key_columns)
+    target_df_indexed = target_df.set_index(key_columns)
+
+    html_rows = []
+
+    for idx, source_row in source_df_indexed.iterrows():
+        if idx not in target_df_indexed.index:
+            row_type = 'insert'
+        else:
+            target_row = target_df_indexed.loc[idx]
+            row_type = 'update' if not source_row.equals(target_row) else 'same'
+
+        if row_type == 'insert':
+            color = 'lightgreen'
+        elif row_type == 'update':
+            color = 'lightpink'
+        else:
+            color = 'white'
+
+        html_row = f"<tr style='background-color:{color}'>" + \
+                   ''.join([f"<td>{val}</td>" for val in source_row.values]) + \
+                   "</tr>"
+        html_rows.append(html_row)
+
+    # Build HTML Table
+    header_html = "<tr>" + ''.join([f"<th>{col}</th>" for col in source_columns]) + "</tr>"
+    full_table = f"<table border='1' style='border-collapse:collapse'>{header_html}{''.join(html_rows)}</table>"
+
+    display(HTML(full_table))
 ```
