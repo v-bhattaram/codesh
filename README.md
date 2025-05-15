@@ -14,9 +14,8 @@ def show_merge_preview_html(conn, source_schema, source_table, target_schema, ta
         target_table (str): Target table name.
         key_columns (list): List of column names used as the primary key for comparison.
     """
-    # Helper to fetch full table as DataFrame
     def fetch_table(schema, table, columns=None):
-        col_str = ", ".join(columns) if columns else "*"
+        col_str = ", ".join(f'"{c}"' for c in columns) if columns else "*"
         query = f'SELECT {col_str} FROM "{schema}"."{table}"'
         return pd.read_sql(query, conn)
 
@@ -30,7 +29,7 @@ def show_merge_preview_html(conn, source_schema, source_table, target_schema, ta
         """, (source_schema, source_table))
         source_columns = [row[0] for row in cur.fetchall()]
 
-    # Fetch tables
+    # Fetch both tables using only source columns
     source_df = fetch_table(source_schema, source_table, source_columns)
     target_df = fetch_table(target_schema, target_table, source_columns)
 
@@ -54,14 +53,19 @@ def show_merge_preview_html(conn, source_schema, source_table, target_schema, ta
         else:
             color = 'white'
 
+        # Ensure idx is a tuple for multi-column keys
+        idx_values = idx if isinstance(idx, tuple) else (idx,)
+        full_row = list(idx_values) + list(source_row.values)
         html_row = f"<tr style='background-color:{color}'>" + \
-                   ''.join([f"<td>{val}</td>" for val in source_row.values]) + \
+                   ''.join([f"<td>{val}</td>" for val in full_row]) + \
                    "</tr>"
         html_rows.append(html_row)
 
-    # Build HTML Table
-    header_html = "<tr>" + ''.join([f"<th>{col}</th>" for col in source_columns]) + "</tr>"
+    # Combine key + non-key columns
+    display_columns = key_columns + [col for col in source_columns if col not in key_columns]
+    header_html = "<tr>" + ''.join([f"<th>{col}</th>" for col in display_columns]) + "</tr>"
     full_table = f"<table border='1' style='border-collapse:collapse'>{header_html}{''.join(html_rows)}</table>"
 
     display(HTML(full_table))
+
 ```
