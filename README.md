@@ -1,71 +1,63 @@
 ```
-from IPython.core.display import display, HTML
-import pandas as pd
+import boto3
+import csv
+import io
+import logging
 
-def show_merge_preview_html(conn, source_schema, source_table, target_schema, target_table, key_columns):
+def insert_csv_to_redshift_all_strings(
+    conn,
+    s3_bucket: str,
+    s3_key: str,
+    table_name: str,
+    schema: str = "public",
+    region: str = "us-east-1",
+    delimiter: str = ",",
+    has_header: bool = True
+):
     """
-    Fetches data from source and target Redshift tables and displays an HTML table comparing them.
+    Download a CSV from S3 and insert into Redshift with all columns treated as strings.
 
     Args:
-        conn: DB connection object (psycopg2 or redshift_connector).
-        source_schema (str): Schema of the source table.
-        source_table (str): Source table name.
-        target_schema (str): Schema of the target table.
-        target_table (str): Target table name.
-        key_columns (list): List of column names used as the primary key for comparison.
+        conn: Redshift connection object (psycopg2 or redshift_connector)
+        s3_bucket (str): Name of the S3 bucket
+        s3_key (str): Key (path) of the CSV file
+        table_name (str): Redshift table name
+        schema (str): Redshift schema name
+        region (str): AWS region
+        delimiter (str): CSV field delimiter
+        has_header (bool): Whether the first row is a header
     """
-    def fetch_table(schema, table, columns=None):
-        col_str = ", ".join(f'"{c}"' for c in columns) if columns else "*"
-        query = f'SELECT {col_str} FROM "{schema}"."{table}"'
-        return pd.read_sql(query, conn)
+    s3 = boto3.client('s3', region_name=region)
+    response = s3.get_object(Bucket=s3_bucket, Key=s3_key)
+    content = response['Body'].read().decode('utf-8')
+    reader = csv.reader(io.StringIO(content), delimiter=delimiter)
 
-    # Get source columns
-    with conn.cursor() as cur:
-        cur.execute(f"""
-            SELECT column_name 
-            FROM information_schema.columns 
-            WHERE table_schema = %s AND table_name = %s 
-            ORDER BY ordinal_position
-        """, (source_schema, source_table))
-        source_columns = [row[0] for row in cur.fetchall()]
+    rows = list(reader)
+    if not rows:
+        logging.warning("CSV is empty.")
+        return
 
-    # Fetch both tables using only source columns
-    source_df = fetch_table(source_schema, source_table, source_columns)
-    target_df = fetch_table(target_schema, target_table, source_columns)
+    if has_header:
+        header = rows.pop(0)
+    else:
+        header = [f"col{i+1}" for i in range(len(rows[0]))]
 
-    # Set index for comparison
-    source_df_indexed = source_df.set_index(key_columns)
-    target_df_indexed = target_df.set_index(key_columns)
+    cursor = conn.cursor()
+    table_full = f"{schema}.{table_name}"
+    placeholders = ', '.join(['%s'] * len(header))
+    insert_sql = f"INSERT INTO {table_full} ({', '.join(header)}) VALUES ({placeholders})"
 
-    html_rows = []
-
-    for idx, source_row in source_df_indexed.iterrows():
-        if idx not in target_df_indexed.index:
-            row_type = 'insert'
-        else:
-            target_row = target_df_indexed.loc[idx]
-            row_type = 'update' if not source_row.equals(target_row) else 'same'
-
-        if row_type == 'insert':
-            color = 'lightgreen'
-        elif row_type == 'update':
-            color = 'lightpink'
-        else:
-            color = 'white'
-
-        # Ensure idx is a tuple for multi-column keys
-        idx_values = idx if isinstance(idx, tuple) else (idx,)
-        full_row = list(idx_values) + list(source_row.values)
-        html_row = f"<tr style='background-color:{color}'>" + \
-                   ''.join([f"<td>{val}</td>" for val in full_row]) + \
-                   "</tr>"
-        html_rows.append(html_row)
-
-    # Combine key + non-key columns
-    display_columns = key_columns + [col for col in source_columns if col not in key_columns]
-    header_html = "<tr>" + ''.join([f"<th>{col}</th>" for col in display_columns]) + "</tr>"
-    full_table = f"<table border='1' style='border-collapse:collapse'>{header_html}{''.join(html_rows)}</table>"
-
-    display(HTML(full_table))
+    try:
+        for row in rows:
+            str_row = [str(val) if val is not None else None for val in row]
+            cursor.execute(insert_sql, str_row)
+        conn.commit()
+        logging.info(f"Inserted {len(rows)} rows into {table_full}")
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Failed to insert rows: {str(e)}")
+        raise
+    finally:
+        cursor.close()
 
 ```
