@@ -1,63 +1,55 @@
 ```
-import boto3
 import csv
-import io
-import logging
+import boto3
+from io import StringIO
 
-def insert_csv_to_redshift_all_strings(
-    conn,
-    s3_bucket: str,
-    s3_key: str,
-    table_name: str,
-    schema: str = "public",
-    region: str = "us-east-1",
-    delimiter: str = ",",
-    has_header: bool = True
-):
+def full_refresh_redshift_insert(conn, schema_name, table_name, s3_bucket, s3_key_path):
     """
-    Download a CSV from S3 and insert into Redshift with all columns treated as strings.
+    Perform a full refresh of Redshift table (truncate and insert row-by-row from S3 CSV).
 
-    Args:
-        conn: Redshift connection object (psycopg2 or redshift_connector)
-        s3_bucket (str): Name of the S3 bucket
-        s3_key (str): Key (path) of the CSV file
-        table_name (str): Redshift table name
-        schema (str): Redshift schema name
-        region (str): AWS region
-        delimiter (str): CSV field delimiter
-        has_header (bool): Whether the first row is a header
+    Parameters:
+    - conn: psycopg2 connection object
+    - schema_name: target Redshift schema
+    - table_name: target Redshift table
+    - s3_bucket: name of the S3 bucket
+    - s3_key_path: full path to the CSV file in S3
     """
-    s3 = boto3.client('s3', region_name=region)
-    response = s3.get_object(Bucket=s3_bucket, Key=s3_key)
-    content = response['Body'].read().decode('utf-8')
-    reader = csv.reader(io.StringIO(content), delimiter=delimiter)
 
+    # Step 1: Download CSV from S3 into memory
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket=s3_bucket, Key=s3_key_path)
+    csv_data = obj['Body'].read().decode('utf-8')
+    reader = csv.reader(StringIO(csv_data))
+
+    # Step 2: Extract headers and rows
+    headers = next(reader)
     rows = list(reader)
-    if not rows:
-        logging.warning("CSV is empty.")
-        return
 
-    if has_header:
-        header = rows.pop(0)
-    else:
-        header = [f"col{i+1}" for i in range(len(rows[0]))]
-
+    # Step 3: Truncate target table
     cursor = conn.cursor()
-    table_full = f"{schema}.{table_name}"
-    placeholders = ', '.join(['%s'] * len(header))
-    insert_sql = f"INSERT INTO {table_full} ({', '.join(header)}) VALUES ({placeholders})"
-
     try:
+        truncate_sql = f"TRUNCATE TABLE {schema_name}.{table_name};"
+        cursor.execute(truncate_sql)
+        print(f"Truncated {schema_name}.{table_name}")
+
+        # Step 4: Insert rows manually
+        placeholders = ','.join(['%s'] * len(headers))
+        insert_sql = f"""
+        INSERT INTO {schema_name}.{table_name} ({', '.join(headers)})
+        VALUES ({placeholders});
+        """
+
         for row in rows:
-            str_row = [str(val) if val is not None else None for val in row]
-            cursor.execute(insert_sql, str_row)
+            cursor.execute(insert_sql, row)
+
         conn.commit()
-        logging.info(f"Inserted {len(rows)} rows into {table_full}")
+        print(f"Inserted {len(rows)} rows into {schema_name}.{table_name}")
+
     except Exception as e:
         conn.rollback()
-        logging.error(f"Failed to insert rows: {str(e)}")
+        print("Error during insert:", e)
         raise
+
     finally:
         cursor.close()
-
 ```
