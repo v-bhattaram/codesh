@@ -1,0 +1,106 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36" version="28.2.9">
+  <diagram name="Page-1" id="4fAcEH_ohZqwdErEXjw9">
+    <mxGraphModel dx="1426" dy="743" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="y-fBdygd5rU6NPQuOuga-1" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="160" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-2" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Azure_Database_PostgreSQL_Server.svg;" vertex="1" parent="1">
+          <mxGeometry x="50" y="20" width="90" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-3" value="" style="outlineConnect=0;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;shape=mxgraph.aws3.postgre_sql_instance;fillColor=#2E73B8;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="150" y="70" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-32" value="ETL Config" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#fff2cc;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="60" y="339" width="140" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-33" value="DataPipeline Manager" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-32">
+          <mxGeometry y="26" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-34" value="DataPipeline DAG Tasks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-32">
+          <mxGeometry y="52" width="140" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-36" value="ETL RUN" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#fff2cc;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="60" y="455" width="140" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-37" value="DataPipeline Run" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-36">
+          <mxGeometry y="26" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-38" value="DataPipeline RunLog" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-36">
+          <mxGeometry y="52" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-39" value="DataPipeline ErrorLog" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-36">
+          <mxGeometry y="78" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-40" value="ETL Template" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#fff2cc;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="60" y="220" width="140" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-41" value="DataPipeline Templates" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-40">
+          <mxGeometry y="26" width="140" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-42" value="DataPipeline Templates DAG Tasks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="y-fBdygd5rU6NPQuOuga-40">
+          <mxGeometry y="52" width="140" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-44" value="TABLES" style="text;html=1;whiteSpace=wrap;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="180" width="160" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-48" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="630" y="18" width="160" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-47" value="" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/icon-cache1/Long_shadow_web_icons-2008/python-943.svg" vertex="1" parent="1">
+          <mxGeometry x="630" y="18" width="160" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-49" value="ETL Common" style="points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;expand=0;collapsible=0;taskMarker=script;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="650" y="190" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-50" value="ETL Integration" style="points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;expand=0;collapsible=0;taskMarker=script;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="650" y="280" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-51" value="ETL Template" style="points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;expand=0;collapsible=0;taskMarker=script;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="650" y="370" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-52" value="Stored Procs&lt;div&gt;Getters&lt;div&gt;Setters&lt;/div&gt;&lt;div&gt;Views&lt;/div&gt;&lt;/div&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="60" y="582" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-53" value="ETL Run" style="points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;expand=0;collapsible=0;taskMarker=script;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="650" y="460" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-54" value="Framework Manager" style="points=[[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0.25,0],[1,0.5,0],[1,0.75,0],[0.75,1,0],[0.5,1,0],[0.25,1,0],[0,0.75,0],[0,0.5,0],[0,0.25,0]];shape=mxgraph.bpmn.task2;whiteSpace=wrap;rectStyle=rounded;size=10;html=1;container=1;expand=0;collapsible=0;taskMarker=script;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="650" y="550" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-55" value="" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 8;" vertex="1" parent="1">
+          <mxGeometry x="240" y="20" width="160" height="700" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-56" value="" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/OS_Images_Classic.svg;" vertex="1" parent="1">
+          <mxGeometry x="240" y="21" width="161.72" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-57" value="UNIX" style="text;html=1;whiteSpace=wrap;strokeColor=#6c8ebf;fillColor=#dae8fc;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="272.86" y="60" width="96" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-58" value="Scirpts" style="sketch=0;aspect=fixed;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#00188D;shape=mxgraph.mscae.enterprise.folder" vertex="1" parent="1">
+          <mxGeometry x="255" y="218.5" width="118.02" height="101.5" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-64" value="Logs" style="sketch=0;aspect=fixed;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#00188D;shape=mxgraph.mscae.enterprise.folder" vertex="1" parent="1">
+          <mxGeometry x="255" y="363.5" width="118.02" height="101.5" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-65" value="Templates" style="sketch=0;aspect=fixed;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#00188D;shape=mxgraph.mscae.enterprise.folder" vertex="1" parent="1">
+          <mxGeometry x="255" y="501" width="118.02" height="101.5" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-68" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;fillColor=#a20025;strokeColor=#6F0000;strokeWidth=8;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="405" y="360" as="sourcePoint" />
+            <mxPoint x="625" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-69" value="&lt;b&gt;SCRIPT I/O&lt;/b&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="476" y="333.5" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="y-fBdygd5rU6NPQuOuga-70" value="&lt;b&gt;DSW&amp;nbsp;&lt;/b&gt;&lt;div style=&quot;background-color: transparent;&quot;&gt;&lt;b&gt;ETL Framework&lt;/b&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=#FF0000;fillColor=#6a00ff;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;strokeWidth=4;" vertex="1" parent="1">
+          <mxGeometry x="440" y="660" width="116" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
