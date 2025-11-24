@@ -1,0 +1,76 @@
+{
+  "datapipeline_name": "rd002",
+  "source": "/data/landing/abc_*.csv",
+  "source_type": "csv_no_header",
+  "table_name": "abc",
+  "mapping_details": [
+    {
+      "mapping_type": "tar_col:src_col_position",
+      "target_column_position": 1,
+      "target_column_name": "column1",
+      "target_column_datatype": "string",
+      "target_column_nullable": "N",
+      "source_column_name": "column_position_1"
+    },
+    {
+      "mapping_type": "tar_col:src_col_position",
+      "target_column_position": 2,
+      "target_column_name": "column2",
+      "target_column_datatype": "number",
+      "target_column_nullable": "N",
+      "source_column_name": "column_position_2"
+    },
+    {
+      "mapping_type": "tar_col:audit",
+      "target_column_position": 3,
+      "target_column_name": "AUDIT3",
+      "target_column_datatype": "string",
+      "target_column_nullable": "N",
+      "source_column_name": "ABC"
+    },
+    {
+      "mapping_type": "tar_col:audit",
+      "target_column_position": 4,
+      "target_column_name": "AUDIT4",
+      "target_column_datatype": "date",
+      "target_column_nullable": "N",
+      "source_column_name": "sysdate",
+      "source_column_format": "YYYYMMDD"
+    },
+    {
+      "mapping_type": "tar_col:src_col_position",
+      "target_column_position": 5,
+      "target_column_name": "column3",
+      "target_column_datatype": "date",
+      "target_column_nullable": "Y",
+      "source_column_name": "column_position_5",
+      "source_column_format": "YYYYMMDD"
+    },
+    {
+      "mapping_type": "tar_col:pending",
+      "target_column_position": 6,
+      "target_column_name": "column4",
+      "target_column_datatype": "timestamp",
+      "target_column_nullable": "Y",
+      "source_column_name": "PENDING",
+      "source_column_format": "YYYYMMDDHH24MISS"
+    },
+    {
+      "mapping_type": "tar_col:pending",
+      "target_column_position": 7,
+      "target_column_name": "column5",
+      "target_column_datatype": "timestamp_tz",
+      "target_column_nullable": "Y",
+      "source_column_name": "PENDING",
+      "source_column_format": "YYYY-MM-DDTHH:MI:SSZ"
+    },
+    {
+      "mapping_type": "tar_col:pending",
+      "target_column_position": 8,
+      "target_column_name": "column8",
+      "target_column_datatype": "string",
+      "target_column_nullable": "Y",
+      "source_column_name": "PENDING"
+    }
+  ]
+}

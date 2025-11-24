@@ -1,0 +1,53 @@
+{
+  "table_name": "abc",
+  "table_details": [
+    {
+      "column_name": "column1",
+      "column_position": 1,
+      "column_nullable": "N",
+      "column_datatype": "string"
+    },
+    {
+      "column_name": "column2",
+      "column_position": 2,
+      "column_nullable": "N",
+      "column_datatype": "number"
+    },
+    {
+      "column_name": "AUDIT3",
+      "column_position": 3,
+      "column_nullable": "N",
+      "column_datatype": "string"
+    },
+    {
+      "column_name": "AUDIT4",
+      "column_position": 4,
+      "column_nullable": "N",
+      "column_datatype": "date"
+    },
+    {
+      "column_name": "column3",
+      "column_position": 5,
+      "column_nullable": "Y",
+      "column_datatype": "date"
+    },
+    {
+      "column_name": "column4",
+      "column_position": 6,
+      "column_nullable": "Y",
+      "column_datatype": "timestamp"
+    },
+    {
+      "column_name": "column5",
+      "column_position": 7,
+      "column_nullable": "Y",
+      "column_datatype": "timestamp_tz"
+    },
+    {
+      "column_name": "column8",
+      "column_position": 8,
+      "column_nullable": "Y",
+      "column_datatype": "string"
+    }
+  ]
+}
